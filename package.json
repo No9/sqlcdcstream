@@ -1,0 +1,30 @@
+{
+  "name": "sqlcdcstream",
+  "description": "MS SQL Server Change Data Capture For Node",
+  "tags": [
+    "SQLServer",
+    "MSSQL",
+    "CDC",
+    "sync",
+	"Change Data Capture"
+  ],
+  "version": "0.0.1",
+  "author": {
+    "name": "Anton Whalley",
+    "email": "anton.whalley@vodafone.ie"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/No9/sqlcdcstream.git"
+  },
+  "bugs": {
+    "url": "https://github.com/No9/sqlcdcstream/issues"
+  },
+  "dependencies": {
+    "node-sqlserver" : "0.1.0"
+  },
+  "devDependencies" : {
+    },
+    "scripts" : {
+  }
+}
