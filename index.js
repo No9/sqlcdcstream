@@ -37,33 +37,32 @@ exports.changes = function (conn_str, tblname, interval) {
 	var stream = new Stream();
 	stream.readable = true	
 	var times = 0;
+	var ldn = 0;
 	
 	var iv = setInterval(function () {
 		
 		var dbname = "dbo";
-		var databasecdc = "SELECT * FROM cdc.dbo_" + tblname + "_CT" ; // where __$start_lsn > " + ldn;
+		
+		var databasecdc = "SELECT * FROM cdc.dbo_" + tblname + "_CT where __$start_lsn > " + ldn;
 		var datagram = [];
 		var metadata = [];
 		var currentObject = {};
 		var rowcount = 0;
-		var ldn ;
+		
 		
 		var stmt = sql.query(conn_str, databasecdc);
-		console.log(databasecdc);
-		console.log(databasecdc);
-			
-		console.log('Interval Fired')	
+
+		    console.log('Interval Fired')	
 			stmt.on('meta', function (meta) { 
-				console.log('Meta Data Retreived')
 				metadata = meta;
 			});
 			stmt.on('row', function (idx) { 
-					console.log('Row Fired')	
 					currentObject = {};
 					rowcount++;
 			});
 			
 			stmt.on('column', function (idx, data, more) { 
+				
 				if(idx == 0){
 					ldn = ldnmanager.parseldn(data);
 				}
@@ -71,7 +70,7 @@ exports.changes = function (conn_str, tblname, interval) {
 				
 				if(idx == (Object.keys(metadata).length - 1)){
 					ldnmanager.saveldn(dbname, tblname, ldn, function(){
-							
+							console.log(currentObject)	
 							currentObject.tablename = tblname;
 							stream.emit('data', currentObject);
 					});
@@ -85,6 +84,7 @@ exports.changes = function (conn_str, tblname, interval) {
 			stmt.on('error', function (err) { 
 				stream.emit('error', err);
 			});
+			
     }, interval);
 	
    stream.end = function (data) {
