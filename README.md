@@ -7,7 +7,22 @@ A stream of SQL Server Change Events
 ```
 npm install sqlcdcstream
 ```
-# Usage
+
+If your database server does not currently have sqlcdcstream schema do either of the following:
+```
+> node node-modules\sqlcdcstream\install-database.js
+```
+
+Or run the script sql\installsqlcdc.sql on the database server
+```
+> osql -E -n-1 -i .\sql\installsqlcdc.sql -o install-database.log
+```
+
+This creates a database on the local instance to store the id of the latest record.
+You will find the output of these commands in install-database.log
+The script will not delete the database if it already exists.
+
+# Configuration
 
 Enable SQL Server Change Data Capture on the Database
 ```
@@ -30,13 +45,16 @@ Enable Change Data Capture on a Table
 2> GO
 ```
 
+# Usage
+
 Write a program to emit changes
 ```
 var mystream = require('sqlcdc')
 // where interval is the .
-var connectionstring =  "Driver={SQL Server Native Client 11.0};Server=(local);Database=NAME_OF_DATABASE;Trusted_Connection={Yes}"
+var connection =  "Driver={SQL Server Native Client 11.0};Server=(local);Database=DB_NAME;Trusted_Connection={Yes}"
 var schema = "dbo"
 var tablename = "NAME_OF_TABLE"
 var interval = 1000 //frequency the table is polled
-var stm = mystream.changes(connectionstring, schema, tablename, interval);
+var stm = mystream.changes(connection, schema, tablename, interval);
+stm.pipe(process.stdout);
 ```

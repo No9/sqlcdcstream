@@ -2,7 +2,7 @@ var Stream = require('stream').Stream
 var sql = require('node-sqlserver');
 
 exports.changes = function (conn_str, schema, tblname, interval) {
-	
+	    
 		//Validate table exists
 		var databasecdc = "SELECT sys.schemas.name, sys.tables.name AS tablename, sys.tables.create_date, sys.tables.modify_date, sys.tables.is_tracked_by_cdc, sys.tables.type_desc "
 						  + "FROM sys.schemas INNER JOIN "
@@ -18,7 +18,6 @@ exports.changes = function (conn_str, schema, tblname, interval) {
 				}
 				//console.log(results);
 				if(results.rows.length == 0){
-				    console.log(databasecdc);
 					throw new Error('Table : "' + tblname + '"  Does Not exist ');
 				}
 				
@@ -44,7 +43,6 @@ exports.changes = function (conn_str, schema, tblname, interval) {
 		
 		var stmt = sql.query(conn_str, databasecdc);
 
-		    console.log('Interval Fired')	
 			stmt.on('meta', function (meta) { 
 				metadata = meta;
 			});
@@ -61,10 +59,13 @@ exports.changes = function (conn_str, schema, tblname, interval) {
 				currentObject[metadata[idx].name] = data;
 				
 				if(idx == (Object.keys(metadata).length - 1)){
-							saveldn(schema, tblname, ldn, function(){
-								console.log(currentObject)	
+							saveldn(schema, tblname, ldn, function(err){
+								if(err){
+									stream.emit('error', err);
+									stream.close();
+								}
 								currentObject.tablename = tblname;
-								stream.emit('data', currentObject);
+								stream.emit('data', JSON.stringify(currentObject));
 					});
 				}
 			});
@@ -117,7 +118,7 @@ function saveldn(dbname, tblname, ldn, cb){
 	
 	var sqlcdc_stmt = sql.query(sqlcdc_conn_str, sqlcdc_databasecdc);
 	sqlcdc_stmt.on('error', function (err) { 
-		//winston.log('error', "merge had an error. Have your created the sqlcdc database? " + err); 
+		return cb(new Error("Can't divide by zero")); 
 	});
 	sqlcdc_stmt.on('done', function () { 
 		cb(); 

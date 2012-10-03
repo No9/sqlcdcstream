@@ -1,10 +1,10 @@
 var http = require('http')
 var assert = require('assert')
 var mystream = require('./index.js')
-var ldnmanager = require('./ldnmanager.js')
 var testcount = 0
 
-var stm = mystream.changes("Driver={SQL Server Native Client 11.0};Server=(local);Database=nodejstest;Trusted_Connection={Yes}", "dbo", "MOVIES", 1000);
+var stm = mystream.changes("Driver={SQL Server Native Client 11.0};Server=(local);Database=nodejstest;Trusted_Connection={Yes}", "dbo", "MOVIES", 1000)
+stm.pipe(process.stdout);
 /*spec(stm)
   .readable()
   .pausable({strict: true}) //strict is optional.
