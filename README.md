@@ -1,14 +1,13 @@
-sqlcdcstream
-============
+# sqlcdcstream
 
-A stream of SQL Server Change Events
+Is a node.js module that enables changes made to data in an Microsoft SQL Server Database Table to be converted to a stream.
 
-# Install 
+## Install 
 ```
 npm install sqlcdcstream
 ```
 
-If your database server does not currently have sqlcdcstream schema do either of the following:
+If your database server does not currently have sqlcdcstream schema do either of the following
 ```
 > node node-modules\sqlcdcstream\install-database.js
 ```
@@ -22,7 +21,7 @@ This creates a database on the local instance to store the id of the latest reco
 You will find the output of these commands in install-database.log
 The script will not delete the database if it already exists.
 
-# Configuration
+## Configuration
 
 Enable SQL Server Change Data Capture on the Database
 ```
@@ -45,7 +44,7 @@ Enable Change Data Capture on a Table
 2> GO
 ```
 
-# Usage
+## Usage
 
 Write a program to emit changes
 ```
