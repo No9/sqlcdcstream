@@ -1,25 +1,20 @@
 var Stream = require('stream').Stream
 var sql = require('node-sqlserver');
-var ldnmanager = require('./ldnmanager.js');
 
-exports.changes = function (conn_str, tblname, interval) {
-	var stream = new Stream();
-	stream.readable = true	
+exports.changes = function (conn_str, schema, tblname, interval) {
+	
 		//Validate table exists
 		var databasecdc = "SELECT sys.schemas.name, sys.tables.name AS tablename, sys.tables.create_date, sys.tables.modify_date, sys.tables.is_tracked_by_cdc, sys.tables.type_desc "
 						  + "FROM sys.schemas INNER JOIN "
                           + "sys.tables ON sys.schemas.schema_id = sys.tables.schema_id where sys.tables.name = '" + tblname + "'"; 
-		//console.log(databasecdc);
 		sql.open(conn_str, function (err, conn) {
 			if (err) {
-				console.log(err);
-				return null;
+				throw new Error(err);
 			}
 			
 			conn.queryRaw(databasecdc, function (err, results) {
 				if (err) {
-					console.log(err);
-					return null;
+					throw new Error(err);
 				}
 				//console.log(results);
 				if(results.rows.length == 0){
@@ -32,18 +27,15 @@ exports.changes = function (conn_str, tblname, interval) {
 				}
 			});
 		});
-		
-	//var databasecdc = "SELECT * FROM cdc." + tblname + " where __$start_lsn > " + ldn;
+	
 	var stream = new Stream();
-	stream.readable = true	
+	stream.readable = true		
 	var times = 0;
 	var ldn = 0;
 	
 	var iv = setInterval(function () {
 		
-		var dbname = "dbo";
-		
-		var databasecdc = "SELECT * FROM cdc.dbo_" + tblname + "_CT where __$start_lsn > " + ldn;
+		var databasecdc = "SELECT * FROM cdc." + schema + "_" + tblname + "_CT where __$start_lsn > " + ldn;
 		var datagram = [];
 		var metadata = [];
 		var currentObject = {};
@@ -64,15 +56,15 @@ exports.changes = function (conn_str, tblname, interval) {
 			stmt.on('column', function (idx, data, more) { 
 				
 				if(idx == 0){
-					ldn = ldnmanager.parseldn(data);
+					ldn = parseldn(data);
 				}
 				currentObject[metadata[idx].name] = data;
 				
 				if(idx == (Object.keys(metadata).length - 1)){
-					ldnmanager.saveldn(dbname, tblname, ldn, function(){
-							console.log(currentObject)	
-							currentObject.tablename = tblname;
-							stream.emit('data', currentObject);
+							saveldn(schema, tblname, ldn, function(){
+								console.log(currentObject)	
+								currentObject.tablename = tblname;
+								stream.emit('data', currentObject);
 					});
 				}
 			});
@@ -99,4 +91,35 @@ exports.changes = function (conn_str, tblname, interval) {
   
   return stream;
   
+}
+
+function parseldn(data)
+{
+	var tmpldn = "";
+	for (ii = 0; ii < data.length; ii++) {
+		var o = data.readUInt8(ii).toString(16);
+		while(o.length < 2) o = "0" + o;
+		tmpldn += o;
+	}
+	return "0x" + tmpldn;
+}
+
+function saveldn(dbname, tblname, ldn, cb){
+	var sqlcdc_conn_str = "Driver={SQL Server Native Client 11.0};Server=(local);Database=sqlcdc;Trusted_Connection={Yes}"
+    var sqlcdc_databasecdc = "MERGE INTO [sqlcdc].[dbo].[tablestatus]";
+	sqlcdc_databasecdc += "USING (SELECT '" + dbname + "' AS dbname, '" + tblname + "' as tblname ) AS SRC ";
+	sqlcdc_databasecdc += "ON tablestatus.databasename = SRC.dbname AND tablestatus.tablename = SRC.tblname ";
+	sqlcdc_databasecdc += "WHEN MATCHED THEN UPDATE SET ";
+	sqlcdc_databasecdc += "currentLSN = " + ldn + " ";
+	sqlcdc_databasecdc += "WHEN NOT MATCHED THEN ";
+	sqlcdc_databasecdc += "INSERT (databasename, tablename, currentLSN) ";
+	sqlcdc_databasecdc += "VALUES (SRC.dbname, SRC.tblname, " + ldn + ");";
+	
+	var sqlcdc_stmt = sql.query(sqlcdc_conn_str, sqlcdc_databasecdc);
+	sqlcdc_stmt.on('error', function (err) { 
+		//winston.log('error', "merge had an error. Have your created the sqlcdc database? " + err); 
+	});
+	sqlcdc_stmt.on('done', function () { 
+		cb(); 
+	});	
 }
