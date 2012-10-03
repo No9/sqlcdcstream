@@ -51,7 +51,6 @@ Enable Change Data Capture on a Table
 Write a program to emit changes
 ```
 var mystream = require('sqlcdc')
-// where interval is the .
 var connection =  "Driver={SQL Server Native Client 11.0};Server=(local);Database=DB_NAME;Trusted_Connection={Yes}"
 var schema = "dbo"
 var tablename = "NAME_OF_TABLE"
