@@ -2,7 +2,7 @@
 
 Is a node.js module that enables changes made to data an Microsoft SQL Server Database Table to be converted to a stream.
 
-It captures all CRUD operations on a table and utilises the built in [Change Data Capture](http://msdn.microsoft.com/en-us/library/bb522489.aspx) fucntionality of SQL Server.
+It captures all CRUD operations on a table and utilises the built in [Change Data Capture](http://msdn.microsoft.com/en-us/library/bb522489.aspx) functionality of SQL Server.
 
 ## Install 
 ```

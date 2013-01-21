@@ -5,3 +5,4 @@ var testcount = 0
 
 var stm = mystream.changes("Driver={SQL Server Native Client 11.0};Server=(local);Database=nodejstest;Trusted_Connection={Yes}", "dbo", "MOVIES", 1000)
 stm.pipe(process.stdout);
+

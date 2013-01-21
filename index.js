@@ -1,5 +1,5 @@
 var Stream = require('stream').Stream
-var sql = require('node-sqlserver');
+var sql = require('msnodesql');
 
 exports.changes = function (conn_str, schema, tblname, interval) {
 	    
