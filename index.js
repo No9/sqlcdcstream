@@ -1,7 +1,7 @@
 var Stream = require('stream').Stream
 var sql = require('msnodesql');
 
-exports.changes = function (conn_str, schema, tblname, interval) {
+module.exports = function (conn_str, schema, tblname, interval) {
 	    
 		//Validate table exists
 		var databasecdc = "SELECT sys.schemas.name, sys.tables.name AS tablename, sys.tables.create_date, sys.tables.modify_date, sys.tables.is_tracked_by_cdc, sys.tables.type_desc "
@@ -27,10 +27,37 @@ exports.changes = function (conn_str, schema, tblname, interval) {
 			});
 		});
 	
-	var stream = new Stream();
-	stream.readable = true		
+	
+				
+	
+	var re = new RegExp("database=([^;]*);"); 
+	var dbnameArray = conn_str.toLowerCase().match("database=([^;]*);");
+	var dbnametotal = dbnameArray.join("").split(";");
+	var dbname = dbnametotal[1]; 
+	var sqlcdc_conn_str = conn_str.toLowerCase().replace(dbnametotal[0], "database=sqlcdc");
+	console.log(sqlcdc_conn_str);
 	var times = 0;
 	var ldn = 0;
+	
+	
+	var cdcdata = "SELECT * FROM tablestatus where tablename = '" + tblname + "' AND databasename = '" + dbname + "';";
+	var stmt = sql.query(sqlcdc_conn_str, cdcdata);
+		stmt.on('meta', function (meta) { });
+		stmt.on('column', function (idx, data, more) { 
+			if(idx == 2)
+				ldn = parseldn(data);
+			});
+		stmt.on('done', function () {
+			if(ldn == undefined){
+				trkObj.ldn = 0;
+			}
+		});
+		
+		stmt.on('error', function (err) { throw new Error('error',"Error finding table status had an error :-( " + err); });
+					
+	var stream = new Stream();
+	stream.readable = true		
+	
 	
 	var iv = setInterval(function () {
 		
@@ -59,7 +86,7 @@ exports.changes = function (conn_str, schema, tblname, interval) {
 				currentObject[metadata[idx].name] = data;
 				
 				if(idx == (Object.keys(metadata).length - 1)){
-							saveldn(schema, tblname, ldn, function(err){
+							saveldn(dbname, tblname, ldn, function(err){
 								if(err){
 									stream.emit('error', err);
 									stream.close();
