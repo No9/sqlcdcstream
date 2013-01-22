@@ -86,14 +86,16 @@ module.exports = function (conn_str, schema, tblname, interval) {
 				currentObject[metadata[idx].name] = data;
 				
 				if(idx == (Object.keys(metadata).length - 1)){
-							saveldn(dbname, tblname, ldn, function(err){
-								if(err){
-									stream.emit('error', err);
-									stream.close();
-								}
-								currentObject.tablename = tblname;
-								stream.emit('data', JSON.stringify(currentObject));
-					});
+							(function(currObj){
+								saveldn(dbname, tblname, ldn, function(err){
+									if(err){
+										stream.emit('error', err);
+										stream.close();
+									}
+									currentObject.tablename = tblname;
+									stream.emit('data', JSON.stringify(currObj));
+								});
+							})(currentObject);
 				}
 			});
 				
